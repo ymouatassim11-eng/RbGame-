@@ -21,9 +21,17 @@ jobs:
           rm -rf android
           npx cap add android
           npx cap sync android
-          ls android/app/
-          ls android/capacitor-cordova-android-plugins/ || echo "no cordova plugins folder"
-          cat android/app/capacitor.build.gradle | head -n 30
+          echo "=== Fix missing cordova file ==="
+          mkdir -p android/capacitor-cordova-android-plugins
+          ls android/capacitor-cordova-android-plugins/ || true
+          if [! -f android/capacitor-cordova-android-plugins/cordova.variables.gradle ]; then
+            echo "Creating missing cordova.variables.gradle"
+            echo "ext { }" > android/capacitor-cordova-android-plugins/cordova.variables.gradle
+          fi
+          if [! -f android/capacitor-cordova-android-plugins/cordova.plugins.gradle ]; then
+            echo "ext { }" > android/capacitor-cordova-android-plugins/cordova.plugins.gradle || true
+          fi
+          cat android/app/capacitor.build.gradle
       - name: Build APK
         run: |
           cd android

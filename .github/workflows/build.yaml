@@ -16,8 +16,14 @@ jobs:
         run: npm ci
       - name: Build web
         run: npm run build
-      - name: Sync Capacitor
-        run: npx cap sync android
+      - name: Create Android project fresh
+        run: |
+          rm -rf android
+          npx cap add android
+          npx cap sync android
+          ls android/app/
+          ls android/capacitor-cordova-android-plugins/ || echo "no cordova plugins folder"
+          cat android/app/capacitor.build.gradle | head -n 30
       - name: Build APK
         run: |
           cd android

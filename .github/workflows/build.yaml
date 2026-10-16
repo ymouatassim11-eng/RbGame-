@@ -21,17 +21,26 @@ jobs:
           rm -rf android
           npx cap add android
           npx cap sync android
-          echo "=== Fix missing cordova files ==="
-          mkdir -p android/capacitor-cordova-android-plugins
-          echo "ext {}" > android/capacitor-cordova-android-plugins/cordova.variables.gradle
-          touch android/capacitor-cordova-android-plugins/build.gradle
-          ls -la android/capacitor-cordova-android-plugins/
+          echo "=== Before fix ==="
           cat android/app/capacitor.build.gradle
+          echo "=== Fixing capacitor.build.gradle line 10 ==="
+          # Create missing cordova files with valid content
+          mkdir -p android/capacitor-cordova-android-plugins/src/main
+          echo "ext {}" > android/capacitor-cordova-android-plugins/cordova.variables.gradle
+          # Restore real build.gradle if we emptied it before
+          rm -rf android
+          npx cap add android
+          npx cap sync android
+          echo "ext {}" > android/capacitor-cordova-android-plugins/cordova.variables.gradle
+          # Patch capacitor.build.gradle to be safe if file missing
+          sed -i "s|apply from:.*cordova.variables.gradle|def cordovaVars = new File(rootDir.parentFile.parentFile, 'capacitor-cordova-android-plugins/cordova.variables.gradle')\nif (cordovaVars.exists()) { apply from: cordovaVars.path } else { ext {} }|" android/app/capacitor.build.gradle || true
+          cat android/app/capacitor.build.gradle
+          ls -la android/capacitor-cordova-android-plugins/
       - name: Build APK
         run: |
           cd android
           chmod +x gradlew
-         ./gradlew assembleDebug
+         ./gradlew assembleDebug --info | tail -n 200
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
